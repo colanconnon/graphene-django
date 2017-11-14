@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+from django.shortcuts import get_object_or_404
+
 import graphene
 from graphene.types import Field, InputField
 from graphene.types.mutation import MutationOptions
@@ -15,7 +17,10 @@ from .types import ErrorType
 
 
 class SerializerMutationOptions(MutationOptions):
+    lookup_field = None
+    partial = False
     serializer_class = None
+    model_class = None
 
 
 def fields_for_serializer(serializer, only_fields, exclude_fields, is_input=False):
@@ -44,18 +49,23 @@ class SerializerMutation(ClientIDMutation):
     )
 
     @classmethod
-    def __init_subclass_with_meta__(cls, serializer_class=None,
+    def __init_subclass_with_meta__(cls, lookup_field=None, partial=False,
+                                    serializer_class=None, model_class=None,
                                     only_fields=(), exclude_fields=(), **options):
 
         if not serializer_class:
             raise Exception('serializer_class is required for the SerializerMutation')
 
         serializer = serializer_class()
+        model_class = model_class or serializer_class.Meta.model
         input_fields = fields_for_serializer(serializer, only_fields, exclude_fields, is_input=True)
         output_fields = fields_for_serializer(serializer, only_fields, exclude_fields, is_input=False)
 
         _meta = SerializerMutationOptions(cls)
+        _meta.lookup_field = lookup_field or model_class._meta.pk.name
+        _meta.partial = partial
         _meta.serializer_class = serializer_class
+        _meta.model_class = model_class
         _meta.fields = yank_fields_from_attrs(
             output_fields,
             _as=Field,
@@ -68,8 +78,27 @@ class SerializerMutation(ClientIDMutation):
         super(SerializerMutation, cls).__init_subclass_with_meta__(_meta=_meta, input_fields=input_fields, **options)
 
     @classmethod
+    def resolve_serializer_inputs(cls, root, info, **input):
+        instance = None
+        lookup_field = cls._meta.lookup_field
+        model_class = cls._meta.model_class
+
+        if lookup_field in input:
+            instance = get_object_or_404(model_class, **{
+                lookup_field: input[lookup_field]})
+            del input[lookup_field]
+
+        return {
+            'instance': instance,
+            'data': input,
+            'partial': cls._meta.partial
+        }
+
+    @classmethod
     def mutate_and_get_payload(cls, root, info, **input):
-        serializer = cls._meta.serializer_class(data=input)
+        kwargs = cls.resolve_serializer_inputs(root, info, **input)
+        print(kwargs)
+        serializer = cls._meta.serializer_class(**kwargs)
 
         if serializer.is_valid():
             return cls.perform_mutate(serializer, info)
