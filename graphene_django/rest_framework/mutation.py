@@ -19,7 +19,7 @@ from .types import ErrorType
 class SerializerMutationOptions(MutationOptions):
     lookup_field = None
     model_class = None
-    operations = ['add', 'update']
+    model_operations = ['add', 'update']
     partial = False
     serializer_class = None
 
@@ -52,20 +52,20 @@ class SerializerMutation(ClientIDMutation):
     @classmethod
     def __init_subclass_with_meta__(cls, lookup_field=None, partial=False,
                                     serializer_class=None, model_class=None,
-                                    operations = ['add', 'update'], 
+                                    model_operations=['add', 'update'], 
                                     only_fields=(), exclude_fields=(), **options):
 
         if not serializer_class:
             raise Exception('serializer_class is required for the SerializerMutation')
 
-        if 'update' not in operations and 'add' not in operations:
-            raise Exception('operations must contain "add" and/or "update"')
+        if 'update' not in model_operations and 'add' not in model_operations:
+            raise Exception('model_operations must contain "add" and/or "update"')
 
         serializer = serializer_class()
         if model_class is None:
             serializer_meta = getattr(serializer_class, 'Meta', None)
             if serializer_meta:
-                model_class = getattr('serializer_meta', 'model', None)
+                model_class = getattr(serializer_meta, 'model', None)
 
         if lookup_field is None and model_class:
             lookup_field = model_class._meta.pk.name
@@ -75,7 +75,7 @@ class SerializerMutation(ClientIDMutation):
 
         _meta = SerializerMutationOptions(cls)
         _meta.lookup_field = lookup_field
-        _meta.operations = operations
+        _meta.model_operations = model_operations
         _meta.partial = partial
         _meta.serializer_class = serializer_class
         _meta.model_class = model_class
@@ -95,11 +95,11 @@ class SerializerMutation(ClientIDMutation):
         lookup_field = cls._meta.lookup_field
         model_class = cls._meta.model_class
 
-        if 'update' in cls._meta.operations and lookup_field in input:
+        if 'update' in cls._meta.model_operations and lookup_field in input:
             instance = get_object_or_404(model_class, **{
                 lookup_field: input[lookup_field]})
             del input[lookup_field]
-        elif 'add' in cls._meta.operations:
+        elif 'add' in cls._meta.model_operations:
             instance = None
         else:
             raise Exception(
