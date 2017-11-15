@@ -18,9 +18,10 @@ from .types import ErrorType
 
 class SerializerMutationOptions(MutationOptions):
     lookup_field = None
+    model_class = None
+    operations = ['add', 'update']
     partial = False
     serializer_class = None
-    model_class = None
 
 
 def fields_for_serializer(serializer, only_fields, exclude_fields, is_input=False):
@@ -51,10 +52,14 @@ class SerializerMutation(ClientIDMutation):
     @classmethod
     def __init_subclass_with_meta__(cls, lookup_field=None, partial=False,
                                     serializer_class=None, model_class=None,
+                                    operations = ['add', 'update'], 
                                     only_fields=(), exclude_fields=(), **options):
 
         if not serializer_class:
             raise Exception('serializer_class is required for the SerializerMutation')
+
+        if 'update' not in operations and 'add' not in operations:
+            raise Exception('operations must contain "add" and/or "update"')
 
         serializer = serializer_class()
         model_class = model_class or serializer_class.Meta.model
@@ -63,6 +68,7 @@ class SerializerMutation(ClientIDMutation):
 
         _meta = SerializerMutationOptions(cls)
         _meta.lookup_field = lookup_field or model_class._meta.pk.name
+        _meta.operations = operations
         _meta.partial = partial
         _meta.serializer_class = serializer_class
         _meta.model_class = model_class
@@ -79,14 +85,20 @@ class SerializerMutation(ClientIDMutation):
 
     @classmethod
     def resolve_serializer_inputs(cls, root, info, **input):
-        instance = None
         lookup_field = cls._meta.lookup_field
         model_class = cls._meta.model_class
 
-        if lookup_field in input:
+        if 'update' in cls._meta.operations and lookup_field in input:
             instance = get_object_or_404(model_class, **{
                 lookup_field: input[lookup_field]})
             del input[lookup_field]
+        elif 'add' in cls._meta.operations:
+            instance = None
+        else:
+            raise Exception(
+                'Invalid update operation. Input parameter {} required.'.format(
+                    lookup_field
+                ))
 
         return {
             'instance': instance,
