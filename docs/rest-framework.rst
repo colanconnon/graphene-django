@@ -35,9 +35,9 @@ Other default attributes:
 
     from graphene_django.rest_framework.mutation import SerializerMutation
 
-    class MyAwesomeMutation(SerializerMutation):
+    class AwesomeModelMutation(SerializerMutation):
         class Meta:
-            serializer_class = MySerializer
+            serializer_class = MyModelSerializer
             model_operations = ['add', 'update']
             lookup_field = 'id'
             partial = False
@@ -52,9 +52,9 @@ updates are queried.
 
     from graphene_django.rest_framework.mutation import SerializerMutation
 
-    class MyAwesomeMutation(SerializerMutation):
+    class AwesomeModelMutation(SerializerMutation):
         class Meta:
-            serializer_class = MySerializer
+            serializer_class = MyModelSerializer
 
         @classmethod
         def resolve_serializer_inputs(cls, root, info, **input):
