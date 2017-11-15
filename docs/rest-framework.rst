@@ -59,7 +59,7 @@ updates are queried.
         @classmethod
         def resolve_serializer_inputs(cls, root, info, **input):
             if 'id' in input:
-                instance = Post.objects.filter(id=id, owner=info.context.user).first()
+                instance = Post.objects.filter(id=input['id'], owner=info.context.user).first()
                 if instance:
                     return {'intance': instance, 'data': input, 'partial': True}
 
