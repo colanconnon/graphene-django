@@ -42,8 +42,8 @@ Other default attributes:
             lookup_field = 'id'
             partial = False
 
-Overriding Update Look Ups
---------------------------
+Overriding Update Queries
+-------------------------
 
 Use the method `resolve_serializer_inputs` to override how
 updates are queried.
