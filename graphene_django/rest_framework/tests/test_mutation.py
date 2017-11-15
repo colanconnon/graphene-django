@@ -16,6 +16,9 @@ class MyModelSerializer(serializers.ModelSerializer):
         model = MyFakeModel
         fields = '__all__'
 
+class MyModelMutation(SerializerMutation):
+    class Meta:
+        serializer_class = MyModelSerializer
 
 class MySerializer(serializers.Serializer):
     text = serializers.CharField()
@@ -89,17 +92,23 @@ def test_mutate_and_get_payload_success():
 
 
 @mark.django_db
-def test_model_mutate_and_get_payload_success():
-    class MyMutation(SerializerMutation):
-        class Meta:
-            serializer_class = MyModelSerializer
-
-    result = MyMutation.mutate_and_get_payload(None, None, **{
+def test_model_add_mutate_and_get_payload_success():
+    result = MyModelMutation.mutate_and_get_payload(None, None, **{
         'cool_name': 'Narf',
     })
     assert result.errors is None
     assert result.cool_name == 'Narf'
     assert isinstance(result.created, datetime.datetime)
+
+@mark.django_db
+def test_model_update_mutate_and_get_payload_success():
+    instance = MyFakeModel.objects.create(cool_name="Narf")
+    result = MyModelMutation.mutate_and_get_payload(None, None, **{
+        'id': instance.id,
+        'cool_name': 'New Narf',
+    })
+    assert result.errors is None
+    assert result.cool_name == 'New Narf'
 
 def test_mutate_and_get_payload_error():
 
@@ -112,11 +121,6 @@ def test_mutate_and_get_payload_error():
     assert len(result.errors) > 0
 
 def test_model_mutate_and_get_payload_error():
-
-    class MyMutation(SerializerMutation):
-        class Meta:
-            serializer_class = MyModelSerializer
-
     # missing required fields
-    result = MyMutation.mutate_and_get_payload(None, None, **{})
+    result = MyModelMutation.mutate_and_get_payload(None, None, **{})
     assert len(result.errors) > 0
