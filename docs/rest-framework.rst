@@ -61,7 +61,7 @@ updates are queried.
             if 'id' in input:
                 instance = Post.objects.filter(id=input['id'], owner=info.context.user).first()
                 if instance:
-                    return {'intance': instance, 'data': input, 'partial': True}
+                    return {'instance': instance, 'data': input, 'partial': True}
 
                 else:
                     raise http.Http404
