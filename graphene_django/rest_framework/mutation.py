@@ -62,12 +62,19 @@ class SerializerMutation(ClientIDMutation):
             raise Exception('operations must contain "add" and/or "update"')
 
         serializer = serializer_class()
-        model_class = model_class or serializer_class.Meta.model
+        if model_class is None:
+            serializer_meta = getattr(serializer_class, 'Meta', None)
+            if serializer_meta:
+                model_class = getattr('serializer_meta', 'model', None)
+
+        if lookup_field is None and model_class:
+            lookup_field = model_class._meta.pk.name
+
         input_fields = fields_for_serializer(serializer, only_fields, exclude_fields, is_input=True)
         output_fields = fields_for_serializer(serializer, only_fields, exclude_fields, is_input=False)
 
         _meta = SerializerMutationOptions(cls)
-        _meta.lookup_field = lookup_field or model_class._meta.pk.name
+        _meta.lookup_field = lookup_field
         _meta.operations = operations
         _meta.partial = partial
         _meta.serializer_class = serializer_class
@@ -109,7 +116,6 @@ class SerializerMutation(ClientIDMutation):
     @classmethod
     def mutate_and_get_payload(cls, root, info, **input):
         kwargs = cls.resolve_serializer_inputs(root, info, **input)
-        print(kwargs)
         serializer = cls._meta.serializer_class(**kwargs)
 
         if serializer.is_valid():
