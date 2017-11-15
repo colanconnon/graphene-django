@@ -52,7 +52,7 @@ class SerializerMutation(ClientIDMutation):
     @classmethod
     def __init_subclass_with_meta__(cls, lookup_field=None, partial=False,
                                     serializer_class=None, model_class=None,
-                                    model_operations=['add', 'update'], 
+                                    model_operations=['add', 'update'],
                                     only_fields=(), exclude_fields=(), **options):
 
         if not serializer_class:
@@ -106,7 +106,7 @@ class SerializerMutation(ClientIDMutation):
                     'Invalid update operation. Input parameter "{}" required.'.format(
                         lookup_field
                     ))
-    
+
             return {
                 'instance': instance,
                 'data': input,
