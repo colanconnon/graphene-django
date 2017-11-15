@@ -110,6 +110,20 @@ def test_model_update_mutate_and_get_payload_success():
     assert result.errors is None
     assert result.cool_name == 'New Narf'
 
+@mark.django_db
+def test_model_invalid_update_mutate_and_get_payload_success():
+    class InvalidModelMutation(SerializerMutation):
+        class Meta:
+            serializer_class = MyModelSerializer
+            model_operations = ['update']
+
+    with raises(Exception) as exc:
+        result = InvalidModelMutation.mutate_and_get_payload(None, None, **{
+            'cool_name': 'Narf',
+        })
+
+    assert '"id" required' in str(exc.value)
+
 def test_mutate_and_get_payload_error():
 
     class MyMutation(SerializerMutation):
@@ -124,3 +138,12 @@ def test_model_mutate_and_get_payload_error():
     # missing required fields
     result = MyModelMutation.mutate_and_get_payload(None, None, **{})
     assert len(result.errors) > 0
+
+def test_invalid_serializer_operations():
+    with raises(Exception) as exc:
+        class MyModelMutation(SerializerMutation):
+            class Meta:
+                serializer_class = MyModelSerializer
+                model_operations = ['Add']
+
+    assert 'model_operations' in str(exc.value)

@@ -29,7 +29,7 @@ customize the look up with the lookup attribute.
 
 Other default attributes:
 
-`partial = False`: Accept updates without all the fields.
+`partial = False`: Accept updates without all the input fields.
 
 .. code:: python
 
