@@ -49,7 +49,7 @@ class SerializerMutation(ClientIDMutation):
     )
 
     @classmethod
-    def __init_subclass_with_meta__(cls, lookup_field=None, 
+    def __init_subclass_with_meta__(cls, lookup_field=None,
                                     serializer_class=None, model_class=None,
                                     model_operations=['create', 'update'],
                                     only_fields=(), exclude_fields=(), **options):
