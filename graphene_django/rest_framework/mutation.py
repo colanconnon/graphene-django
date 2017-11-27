@@ -19,8 +19,7 @@ from .types import ErrorType
 class SerializerMutationOptions(MutationOptions):
     lookup_field = None
     model_class = None
-    model_operations = ['add', 'update']
-    partial = False
+    model_operations = ['create', 'update']
     serializer_class = None
 
 
@@ -50,16 +49,16 @@ class SerializerMutation(ClientIDMutation):
     )
 
     @classmethod
-    def __init_subclass_with_meta__(cls, lookup_field=None, partial=False,
+    def __init_subclass_with_meta__(cls, lookup_field=None, 
                                     serializer_class=None, model_class=None,
-                                    model_operations=['add', 'update'],
+                                    model_operations=['create', 'update'],
                                     only_fields=(), exclude_fields=(), **options):
 
         if not serializer_class:
             raise Exception('serializer_class is required for the SerializerMutation')
 
-        if 'update' not in model_operations and 'add' not in model_operations:
-            raise Exception('model_operations must contain "add" and/or "update"')
+        if 'update' not in model_operations and 'create' not in model_operations:
+            raise Exception('model_operations must contain "create" and/or "update"')
 
         serializer = serializer_class()
         if model_class is None:
@@ -76,7 +75,6 @@ class SerializerMutation(ClientIDMutation):
         _meta = SerializerMutationOptions(cls)
         _meta.lookup_field = lookup_field
         _meta.model_operations = model_operations
-        _meta.partial = partial
         _meta.serializer_class = serializer_class
         _meta.model_class = model_class
         _meta.fields = yank_fields_from_attrs(
@@ -91,7 +89,7 @@ class SerializerMutation(ClientIDMutation):
         super(SerializerMutation, cls).__init_subclass_with_meta__(_meta=_meta, input_fields=input_fields, **options)
 
     @classmethod
-    def resolve_serializer_inputs(cls, root, info, **input):
+    def get_serializer_kwargs(cls, root, info, **input):
         lookup_field = cls._meta.lookup_field
         model_class = cls._meta.model_class
 
@@ -99,7 +97,7 @@ class SerializerMutation(ClientIDMutation):
             if 'update' in cls._meta.model_operations and lookup_field in input:
                 instance = get_object_or_404(model_class, **{
                     lookup_field: input[lookup_field]})
-            elif 'add' in cls._meta.model_operations:
+            elif 'create' in cls._meta.model_operations:
                 instance = None
             else:
                 raise Exception(
@@ -110,14 +108,13 @@ class SerializerMutation(ClientIDMutation):
             return {
                 'instance': instance,
                 'data': input,
-                'partial': cls._meta.partial
             }
 
-        return {'data': input, 'partial': cls._meta.partial}
+        return {'data': input}
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, **input):
-        kwargs = cls.resolve_serializer_inputs(root, info, **input)
+        kwargs = cls.get_serializer_kwargs(root, info, **input)
         serializer = cls._meta.serializer_class(**kwargs)
 
         if serializer.is_valid():
