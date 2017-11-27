@@ -44,8 +44,8 @@ Other default attributes:
 Overriding Update Queries
 -------------------------
 
-Use the method `resolve_serializer_inputs` to override how
-updates are queried.
+Use the method `get_serializer_kwargs` to override how
+updates are applied.
 
 .. code:: python
 
@@ -56,7 +56,7 @@ updates are queried.
             serializer_class = MyModelSerializer
 
         @classmethod
-        def resolve_serializer_inputs(cls, root, info, **input):
+        def get_serializer_kwargs(cls, root, info, **input):
             if 'id' in input:
                 instance = Post.objects.filter(id=input['id'], owner=info.context.user).first()
                 if instance:
