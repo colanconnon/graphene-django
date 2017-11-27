@@ -19,10 +19,10 @@ You can create a Mutation based on a serializer by using the
         class Meta:
             serializer_class = MySerializer
 
-Add/Update Operations
+Create/Update Operations
 ---------------------
 
-By default ModelSerializers accept add and update operations. To
+By default ModelSerializers accept create and update operations. To
 customize this use the `model_operations` attribute. The update
 operation looks up models by the primary key by default. You can
 customize the look up with the lookup attribute.
@@ -38,9 +38,8 @@ Other default attributes:
     class AwesomeModelMutation(SerializerMutation):
         class Meta:
             serializer_class = MyModelSerializer
-            model_operations = ['add', 'update']
+            model_operations = ['create', 'update']
             lookup_field = 'id'
-            partial = False
 
 Overriding Update Queries
 -------------------------
