@@ -32,7 +32,7 @@ def fields_for_serializer(serializer, only_fields, exclude_fields, is_input=Fals
             # name in already_created_fields
         )
 
-        if is_not_in_only or is_excluded:
+        if is_not_in_only or is_excluded or field.read_only:
             continue
 
         fields[name] = convert_serializer_field(field, is_input=is_input)
