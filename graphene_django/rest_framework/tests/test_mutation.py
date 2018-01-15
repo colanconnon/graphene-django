@@ -1,6 +1,6 @@
 import datetime
 
-from graphene import Field
+from graphene import Field, ResolveInfo
 from graphene.types.inputobjecttype import InputObjectType
 from py.test import raises
 from py.test import mark
@@ -9,6 +9,20 @@ from rest_framework import serializers
 from ...types import DjangoObjectType
 from ..models import MyFakeModel
 from ..mutation import SerializerMutation
+
+def mock_info():
+  return ResolveInfo(
+    None,
+    None,
+    None,
+    None,
+    schema=None,
+    fragments=None,
+    root_value=None,
+    operation=None,
+    variable_values=None,
+    context=None
+  )
 
 
 class MyModelSerializer(serializers.ModelSerializer):
@@ -82,7 +96,7 @@ def test_mutate_and_get_payload_success():
         class Meta:
             serializer_class = MySerializer
 
-    result = MyMutation.mutate_and_get_payload(None, None, **{
+    result = MyMutation.mutate_and_get_payload(None, mock_info(), **{
         'text': 'value',
         'model': {
             'cool_name': 'other_value'
@@ -93,7 +107,7 @@ def test_mutate_and_get_payload_success():
 
 @mark.django_db
 def test_model_add_mutate_and_get_payload_success():
-    result = MyModelMutation.mutate_and_get_payload(None, None, **{
+    result = MyModelMutation.mutate_and_get_payload(None, mock_info(), **{
         'cool_name': 'Narf',
     })
     assert result.errors is None
@@ -103,7 +117,7 @@ def test_model_add_mutate_and_get_payload_success():
 @mark.django_db
 def test_model_update_mutate_and_get_payload_success():
     instance = MyFakeModel.objects.create(cool_name="Narf")
-    result = MyModelMutation.mutate_and_get_payload(None, None, **{
+    result = MyModelMutation.mutate_and_get_payload(None, mock_info(), **{
         'id': instance.id,
         'cool_name': 'New Narf',
     })
@@ -118,7 +132,7 @@ def test_model_invalid_update_mutate_and_get_payload_success():
             model_operations = ['update']
 
     with raises(Exception) as exc:
-        result = InvalidModelMutation.mutate_and_get_payload(None, None, **{
+        result = InvalidModelMutation.mutate_and_get_payload(None, mock_info(), **{
             'cool_name': 'Narf',
         })
 
@@ -131,12 +145,12 @@ def test_mutate_and_get_payload_error():
             serializer_class = MySerializer
 
     # missing required fields
-    result = MyMutation.mutate_and_get_payload(None, None, **{})
+    result = MyMutation.mutate_and_get_payload(None, mock_info(), **{})
     assert len(result.errors) > 0
 
 def test_model_mutate_and_get_payload_error():
     # missing required fields
-    result = MyModelMutation.mutate_and_get_payload(None, None, **{})
+    result = MyModelMutation.mutate_and_get_payload(None, mock_info(), **{})
     assert len(result.errors) > 0
 
 def test_invalid_serializer_operations():
