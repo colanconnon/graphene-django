@@ -108,9 +108,10 @@ class SerializerMutation(ClientIDMutation):
             return {
                 'instance': instance,
                 'data': input,
+                'context': {'request': info.context}
             }
 
-        return {'data': input}
+        return {'data': input, 'context': {'request': info.context}}
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, **input):
